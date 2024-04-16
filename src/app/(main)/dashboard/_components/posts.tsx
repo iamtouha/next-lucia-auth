@@ -6,11 +6,16 @@ import { NewPost } from "./new-post";
 import { PostCard } from "./post-card";
 
 interface PostsProps {
-  posts: RouterOutputs["post"]["myPosts"];
-  subscriptionPlan: RouterOutputs["stripe"]["getSubscriptionPlan"];
+  promises: Promise<[RouterOutputs["post"]["myPosts"], RouterOutputs["stripe"]["getPlan"]]>;
 }
 
-export const Posts = ({ posts, subscriptionPlan }: PostsProps) => {
+export function Posts({ promises }: PostsProps) {
+  /**
+   * use is a React Hook that lets you read the value of a resource like a Promise or context.
+   * @see https://react.dev/reference/react/use
+   */
+  const [posts, subscriptionPlan] = React.use(promises);
+
   /**
    * useOptimistic is a React Hook that lets you show a different state while an async action is underway.
    * It accepts some state as an argument and returns a copy of that state that can be different during the duration of an async action such as a network request.
@@ -42,18 +47,12 @@ export const Posts = ({ posts, subscriptionPlan }: PostsProps) => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <NewPost
-        isEligible={
-          (optimisticPosts.length < 3 || subscriptionPlan?.isPro) ?? false
-        }
+        isEligible={(optimisticPosts.length < 2 || subscriptionPlan?.isPro) ?? false}
         setOptimisticPosts={setOptimisticPosts}
       />
       {optimisticPosts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          setOptimisticPosts={setOptimisticPosts}
-        />
+        <PostCard key={post.id} post={post} setOptimisticPosts={setOptimisticPosts} />
       ))}
     </div>
   );
-};
+}
